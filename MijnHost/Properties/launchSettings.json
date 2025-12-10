@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MijnHost": {
+      "commandName": "Project",
+      "commandLineArgs": "duofun.nl 123456"
+    }
+  }
+}
