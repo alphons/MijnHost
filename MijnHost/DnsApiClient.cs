@@ -31,7 +31,26 @@ public class DnsApiClient : IDisposable
 			userAgent ?? "my-application/1.0.0");
 	}
 
-	public async Task<DnsGetResponse> GetDomainRecordsAsync(
+	public async Task<DnsResponse<DnsDomains>> GetDomainsAsync(CancellationToken ct = default)
+	{
+		var response = await httpClient
+			.GetAsync("domains/", ct)
+			.ConfigureAwait(false);
+
+		var json = await response.Content.ReadAsStringAsync(ct);
+
+		if (!response.IsSuccessStatusCode)
+		{
+			var error = JsonSerializer.Deserialize<DnsApiErrorResponse>(json, JsonOptions)
+						?? new DnsApiErrorResponse(-1, "Unknown error");
+
+			throw new DnsApiException(response.StatusCode, error.Status, error.StatusDescription, json);
+		}
+
+		return JsonSerializer.Deserialize<DnsResponse<DnsDomains>>(json, JsonOptions)!;
+	}
+
+	public async Task<DnsResponse<DnsRecords>> GetDomainRecordsAsync(
 		string domain,
 		CancellationToken ct = default)
 	{
@@ -49,7 +68,7 @@ public class DnsApiClient : IDisposable
 			throw new DnsApiException(response.StatusCode, error.Status, error.StatusDescription, json);
 		}
 
-		return JsonSerializer.Deserialize<DnsGetResponse>(json, JsonOptions)!;
+		return JsonSerializer.Deserialize<DnsResponse<DnsRecords>>(json, JsonOptions)!;
 	}
 
 	public async Task<DnsApiResponse> UpdateDomainRecordsAsync(
@@ -118,12 +137,24 @@ public record DnsRecord(
 	string Value,
 	int Ttl = 900);
 
-public record DnsGetResponse(
+public record DnsResponse<T>(
 	int Status,
 	string StatusDescription,
-	DnsGetData Data);
+	T Data);
 
-public record DnsGetData(
+
+public record DnsDomains(
+	List<DnsDomain> Domains);
+
+public record DnsDomain(
+	int Id,
+	string Domain,
+	string Renewal_Date,
+	string Status,
+	int Status_Id,
+	List<string> Tags);
+
+public record DnsRecords(
 	string Domain,
 	List<DnsRecord> Records);
 
