@@ -8,6 +8,8 @@ if(args.Length < 1)
 	Console.WriteLine("\t--list");
 	Console.WriteLine("\t--records example.com");
 	Console.WriteLine("\t--challenge example.com 12345");
+	Console.WriteLine("\t--cname example.com example.com.acme.certservice.nl.");
+	Console.WriteLine("\t--checkall");
 	Environment.Exit(1);
 }
 
@@ -24,6 +26,9 @@ try
 	string? userAgent = config["MijnHost:UserAgent"];
 
 	using var client = new DnsApiClient(apiKey, userAgent);
+
+	DnsApiResponse? result = null;
+	string domain, value;
 
 	switch (args[0])
 	{
@@ -43,10 +48,19 @@ try
 			}
 			break;
 		case "--challenge":
-			string domain = args[1];
-			string value = args[2];
-			var result = await client.PatchDnsRecordAsync(domain, new DnsRecord($"_acme-challenge", "TXT", value, 60));
+			domain = args[1];
+			value = args[2];
+			result = await client.PatchDnsRecordAsync(domain, new DnsRecord($"_acme-challenge", "TXT", value, 60));
 			Console.WriteLine($"Success: {result.Status} - {result.StatusDescription}");
+			break;
+		case "--cname":
+			domain = args[1];
+			value = args[2];
+			result = await client.PatchDnsRecordAsync(domain, new DnsRecord($"_acme-challenge", "CNAME", value, 60));
+			Console.WriteLine($"Success: {result.Status} - {result.StatusDescription}");
+			break;
+		case "--checkall":
+			await CheckAllHelper.CheckAlAsync(client);
 			break;
 		default:
 			Console.WriteLine("Onbekende opdracht.");

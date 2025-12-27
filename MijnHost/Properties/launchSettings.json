@@ -2,7 +2,7 @@
   "profiles": {
     "MijnHost": {
       "commandName": "Project",
-      "commandLineArgs": "--records lingerieke.nl"
+      "commandLineArgs": "--checkall"
     }
   }
 }
